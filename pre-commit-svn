@@ -1,0 +1,105 @@
+#!/bin/sh
+
+# PRE-COMMIT HOOK
+#
+# The pre-commit hook is invoked before a Subversion txn is
+# committed.  Subversion runs this hook by invoking a program
+# (script, executable, binary, etc.) named 'pre-commit' (for which
+# this file is a template), with the following ordered arguments:
+#
+#   [1] REPOS-PATH   (the path to this repository)
+#   [2] TXN-NAME     (the name of the txn about to be committed)
+#
+# The default working directory for the invocation is undefined, so
+# the program should set one explicitly if it cares.
+#
+# If the hook program exits with success, the txn is committed; but
+# if it exits with failure (non-zero), the txn is aborted, no commit
+# takes place, and STDERR is returned to the client.   The hook
+# program can use the 'svnlook' utility to help it examine the txn.
+#
+# On a Unix system, the normal procedure is to have 'pre-commit'
+# invoke other programs to do the real work, though it may do the
+# work itself too.
+#
+#   ***  NOTE: THE HOOK PROGRAM MUST NOT MODIFY THE TXN, EXCEPT  ***
+#   ***  FOR REVISION PROPERTIES (like svn:log or svn:author).   ***
+#
+#   This is why we recommend using the read-only 'svnlook' utility.
+#   In the future, Subversion may enforce the rule that pre-commit
+#   hooks should not modify the versioned data in txns, or else come
+#   up with a mechanism to make it safe to do so (by informing the
+#   committing client of the changes).  However, right now neither
+#   mechanism is implemented, so hook writers just have to be careful.
+#
+# Note that 'pre-commit' must be executable by the user(s) who will
+# invoke it (typically the user httpd runs as), and that user must
+# have filesystem-level permission to access the repository.
+#
+# On a Windows system, you should name the hook program
+# 'pre-commit.bat' or 'pre-commit.exe',
+# but the basic idea is the same.
+#
+# The hook program typically does not inherit the environment of
+# its parent process.  For example, a common problem is for the
+# PATH environment variable to not be set to its usual value, so
+# that subprograms fail to launch unless invoked via absolute path.
+# If you're having unexpected problems with a hook program, the
+# culprit may be unusual (or missing) environment variables.
+# 
+# Here is an example hook script, for a Unix /bin/sh interpreter.
+# For more examples and pre-written hooks, see those in
+# the Subversion repository at
+# http://svn.collab.net/repos/svn/trunk/tools/hook-scripts/ and
+# http://svn.collab.net/repos/svn/trunk/contrib/hook-scripts/
+
+REPOS="$1"
+TXN="$2"
+
+# Make sure that the log message contains some text.
+SVNLOOK=/usr/bin/svnlook
+
+LOGMSG=$($SVNLOOK log -t "$TXN" "$REPOS")
+
+# check if any comment has supplied by the commiter
+if [ -z "$LOGMSG" ]; then
+echo "Your commit was blocked because it have no comments."
+exit 1
+fi 1>&2
+
+#check minimum size of text
+if [ ${#LOGMSG} -lt 15 ]; then
+echo "Your Commit was blocked because the comments does not meet minimum length requirements (15 letters)."
+exit 1
+fi 1>&2
+
+# get TaskID by regex
+TaskID=$(expr "$LOGMSG" : '\([#][0-9]\{1,9\}[:][" "]\)[A-Za-z0-9]*')
+
+# Check if task id was found. 
+if [ -z "$TaskID" ]; then
+
+echo   
+echo "No Task id found in log message \"$LOGMSG\"" 
+echo   
+echo "The TaskID must be the first item on the first line of the log message."  
+echo   
+echo "Proper TaskID format--> #123:{space}'Your commit message'  " 
+exit 1
+fi 1>&2
+
+#Check that QA should not be present in log message.
+
+if grep -q ' QA\>' <<< "$LOGMSG"; then
+    echo
+    echo "Your log message \"$LOGMSG\" must not contain QA in upper case."
+    echo
+    exit 1
+fi 1>&2
+
+#Check that restricted files should not get commited.
+if [ -x ${REPOS}/hooks/restrict_files.sh ]; then
+echo
+${REPOS}/hooks/restrict_files.sh "${REPOS}" "${TXN}"
+fi 1>&2
+
