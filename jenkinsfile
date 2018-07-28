@@ -1,0 +1,30 @@
+node {
+   stage('SCM checkout'){
+       git credentialsId: 'github1', url: 'https://github.com/deep7710/my-app.git'
+
+   }
+   
+   stage('Build'){
+       def mvnHome = tool name: 'mvn3', type: 'maven'
+       def mvnCMD = "${mvnHome}/bin/mvn"
+       sh "${mvnCMD} clean install"
+   }
+   stage('build docker image'){
+       sh 'docker build -t deepnda/my-app:1.0.0 .'
+   }
+   stage('Push to Dockerhub'){
+       withCredentials([string(credentialsId: 'DOCKERHUBPWD', variable: 'DOCKERHUB')]) {
+             sh "docker login -u deepnda -p ${DOCKERHUB}"
+            }
+            sh 'docker push deepnda/my-app:1.0.0'
+
+   }
+   stage('run container on QA'){
+       def dockerRun = 'docker run -p 8080:8080 -d --name myapp deepnda/my-app:1.0.0'
+       sshagent(['QAlogin']) {
+                               sh "ssh -o StrictHostKeyChecking=no ec2-user@13.232.182.209 ${dockerRun}"
+                              }
+
+                                }
+   
+}
