@@ -55,9 +55,11 @@ tar -xzf $KAFKA_TARBALL || cleanup_and_exit $?
 # Build the RPM
 KAFKA_DIR=${KAFKA_TARBALL%.tgz}
 cd $KAFKA_DIR
+mkdir tmp
+cp /root/kafka.service tmp
 # Fix permissions of shell scripts
 chmod 755 bin/*.sh
-/usr/local/bin/fpm -s dir -t rpm -a all \
+/usr/local/bin/fpm -s dir -t rpm --rpm-init /root/kafka -a all \
     -n kafka \
     -v $KAFKA_VERSION \
     --iteration "1.miguno" \
@@ -65,7 +67,7 @@ chmod 755 bin/*.sh
     --vendor "Kafka Project" \
     --url http://kafka.apache.org \
     --description "A high-throughput distributed messaging system (RPM built from release for Scala $SCALA_VERSION)" \
-    -p $OLD_PWD/kafka-VERSION.el6.ARCH.rpm \
+    -p $OLD_PWD/kafka-VERSION.el7.ARCH.rpm \
     -a "x86_64" \
     --prefix $INSTALL_ROOT_DIR \
     * || cleanup_and_exit $?
