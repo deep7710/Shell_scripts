@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if [ "`find /opt/zookeeper/ -name tmp`" == "/opt/zookeeper/tmp" ];
+then
+   \cp /opt/zookeeper/tmp/zookeeper.service /etc/systemd/system/
+   rm -rf /opt/zookeeper/tmp
+elif [ "`find /opt/zookeeper/ -name tmp`" != "/opt/zookeeper/tmp" ];
+then
+   echo "Processing"
+fi
+
+/bin/systemctl daemon-reload
+
+if [ $1 == "start" ]
+then
+    /bin/systemctl start zookeeper
+elif [ $1 == "stop" ]
+then
+    /bin/systemctl stop zookeeper
+elif [ $1 == "restart" ]
+then
+    /bin/systemctl restart zookeeper
+elif [ $1 == "status" ]
+then
+   /bin/systemctl status zookeeper
+else
+   echo "invalid input.Kindly input one of these- start, stop, restart, status"
+fi
