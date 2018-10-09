@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if [ "`find /opt/kafka/ -name tmp`" == "/opt/kafka/tmp" ];
+then
+   \cp /opt/kafka/tmp/kafka.service /etc/systemd/system/
+   rm -rf /opt/kafka/tmp
+elif [ "`find /opt/kafka/ -name tmp`" != "/opt/kafka/tmp" ];
+then
+   echo "Processing"
+fi
+
+/bin/systemctl daemon-reload
+
+if [ $1 == "start" ]
+then
+    /bin/systemctl start kafka 
+elif [ $1 == "stop" ]
+then
+    /bin/systemctl stop kafka
+elif [ $1 == "restart" ]
+then
+    /bin/systemctl restart kafka
+elif [ $1 == "status" ]
+then
+   /bin/systemctl status kafka  
+else
+   echo "invalid input.Kindly input one of these- start, stop, restart, status"
+fi
