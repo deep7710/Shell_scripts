@@ -59,7 +59,7 @@ mkdir tmp
 cp /root/kafka.service tmp
 # Fix permissions of shell scripts
 chmod 755 bin/*.sh
-/usr/local/bin/fpm -s dir -t rpm --rpm-init /root/kafka -a all \
+/usr/local/bin/fpm -s dir -t rpm  -a all --rpm-init /root/kafka \
     -n kafka \
     -v $KAFKA_VERSION \
     --iteration "1.miguno" \
