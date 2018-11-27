@@ -19,3 +19,7 @@ WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
 service prometheus start
+
+****
+--web.listen-address=:8080 use this to chng prom port....mention this against execstart in service file
+****
